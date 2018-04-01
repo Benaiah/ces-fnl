@@ -1,11 +1,8 @@
-(local inspect (require "inspect"))
-(local lume (require "../lib/lume"))
-
-(local map lume.map)
-;; (local slice lume.slice)
-(local all? lume.all)
 (local unpack (or unpack table.unpack))
-(local push table.insert)
+(local push (fn [tab v]
+              (let [len (# tab)
+                    i (+ len 1)]
+                (tset tab i v))))
 
 ;; this slice only supports going forward, and uses beginning + length
 ;; instead of beginning + end
@@ -16,9 +13,6 @@
                ret))
 
 (local get-genid (fn [] (var x 0) (fn [] (set x (+ x 1)) x)))
-
-(local log (fn [message obj]
-             (print (.. message ": " (inspect obj)))))
 
 (local component-store/create
        (fn [params]
