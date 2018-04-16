@@ -1,0 +1,24 @@
+#!/usr/bin/env lua
+
+local script_directory = arg[0]:match("(.-)[^\\/]+$")
+package.path = script_directory .. "../?.lua;"
+local fennel = require("modules.fennel.fennel")
+
+local project_directory = script_directory .. "../"
+local files = { ["ces.fnl"] = "ces.lua" }
+
+for source, target in pairs(files) do
+   local source_f = assert(io.open(project_directory .. source, "rb"))
+   local target_f = assert(io.open(project_directory .. target, "w"))
+   local options = { filename = file, indent = false }
+   local ok, val = pcall(fennel.compileString, source_f:read("*all"), options)
+   if (not ok) then
+      io.stderr:write(val .. "\n")
+      os.exit(1)
+   else
+      io.stdout:write(source .. " -> " .. target .. "\n")
+      target_f:write(val)
+   end
+   source_f:close()
+   target_f:close()
+end
