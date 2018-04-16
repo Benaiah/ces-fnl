@@ -87,6 +87,7 @@ local component_store = nil
 local component_name = nil
 local component_args = ({})
 local remaining_args = 0
+while not done do
 local function _14_()
 if not component_store then
 component_name = entity[i]
@@ -111,7 +112,8 @@ return nil
 end
 end
 end
-__fnl_global___2awhile(not done, _14_())
+_14_()
+end
 world.entities[id] = component_names
 return id
 end
@@ -159,6 +161,7 @@ end
 local done = nil
 local i = 1
 local copy_from_i = nil
+while not done do
 local it = pool[i]
 local function _16_()
 if (it) == (nil) then
@@ -171,15 +174,17 @@ end
 _16_()
 local j = (copy_from_i + pool_arity)
 copy_from_i = nil
+while ((j) <= (i_of_last_id) and not copy_from_i) do
 local function _17_()
 if pool[j] then
 copy_from_i = j
 return nil
 end
 end
+_17_()
 j = (j + pool_arity)
-__fnl_global___2awhile(((j) <= (i_of_last_id) and not copy_from_i), _17_(), nil)
-local function _18_()
+end
+local function _17_()
 if not copy_from_i then
 for j = i, pool_length do
 pool[j] = nil
@@ -188,7 +193,7 @@ done = true
 return nil
 end
 end
-_18_()
+_17_()
 if copy_from_i then
 for j = 0, (pool_arity - 1) do
 pool[(i + j)] = pool[(copy_from_i + j)]
@@ -198,8 +203,10 @@ return nil
 end
 end
 end
+_16_()
 i = (i + pool_arity)
-return __fnl_global___2awhile(not done, nil, _16_(), nil)
+end
+return nil
 end
 local component_store_2frun_removals = _15_
 local function _16_(world, components_updates)
@@ -256,6 +263,7 @@ push(end_positions, component_store_2flast_component_pool_position(component_sto
 push(positions, 1)
 end
 local done = nil
+while not done do
 local all_identical = true
 local entity_id = nil
 for i = 1, num_stores do
@@ -290,8 +298,8 @@ return fun(extra_arg, unpack(components))
 elseif "else" then
 local i = 1
 local increased_an_index = false
+while not increased_an_index do
 local function _21_()
-local function _22_()
 if (num_stores) ~= (i) then
 local index = indices[i]
 local next_index = indices[(i + 1)]
@@ -305,8 +313,8 @@ return nil
 end
 end
 end
-_22_()
-local function _23_()
+_21_()
+local function _22_()
 if (num_stores) == (i) then
 local index = indices[i]
 local pos = positions[i]
@@ -317,13 +325,13 @@ increased_an_index = true
 return nil
 end
 end
-_23_()
+_22_()
 i = (i + 1)
+end
 return nil
 end
-return __fnl_global___2awhile(not increased_an_index, _21_())
 end
-end
+_21_()
 done = true
 for i = 1, num_stores do
 local function _22_()
@@ -334,7 +342,8 @@ end
 end
 _22_()
 end
-return __fnl_global___2awhile(not done, nil, nil, nil, _21_(), nil, nil)
+end
+return nil
 end
 local component_store_2fcall_on_common_components = _20_
 local function _21_(world, component_names, fun, extra_arg)

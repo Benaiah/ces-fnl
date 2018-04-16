@@ -73,7 +73,7 @@
            (var component-name nil)
            (var component-args [])
            (var remaining-args 0)
-           (*while (not done)
+           (while (not done)
              (if (not component-store)
                  (do
                    (set component-name (. entity i))
@@ -128,7 +128,7 @@
            (var done nil)
            (var i 1)
            (var copy-from-i nil)
-           (*while (not done)
+           (while (not done)
              (local it (. pool i))
              (when (= it nil)
                ;; find the index of the next component that's
@@ -138,7 +138,7 @@
                  (set copy-from-i i))
                (var j (+ copy-from-i pool-arity))
                (set copy-from-i nil)
-               (*while (and (<= j i-of-last-id) (not copy-from-i))
+               (while (and (<= j i-of-last-id) (not copy-from-i))
                  (when (. pool j) (set copy-from-i j))
                  (set j (+ j pool-arity)))
 
@@ -206,7 +206,7 @@
            (push positions 1))
 
          (var done nil)
-         (*while (not done)
+         (while (not done)
            ;; are all entity ids identical?
            (var all-identical true)
            (var entity-id nil)
@@ -235,7 +235,7 @@
                (do
                  (var i 1)
                  (var increased-an-index false)
-                 (*while (not increased-an-index)
+                 (while (not increased-an-index)
                    (do 
                      (when (~= num-stores i)
                        (do
