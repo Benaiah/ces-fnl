@@ -55,15 +55,20 @@ local function component_store_2fpool_position_from_index(store, index)
 return (1 + ((index - 1) * store["pool-arity"]))
 end
 do local _ = component_store_2fpool_position_from_index end
-local function component_store_2fget_at(store, component_index)
-local pool_index = (1 + ((component_index - 1) * store["pool-arity"]))
-return __fnl_global__component_2dstore_2fget_2dat_2dpool_2dposition(store, pool_index)
+local function component_store_2fget_id_at(store, component_index)
+local pool_index = component_store_2fpool_position_from_index(store, component_index)
+return store.pool[pool_index]
 end
-do local _ = component_store_2fget_at end
+do local _ = component_store_2fget_id_at end
 local function component_store_2fget_at_pool_position(store, pool_index)
 return slice(store.pool, pool_index, store["pool-arity"])
 end
 do local _ = component_store_2fget_at_pool_position end
+local function component_store_2fget_at(store, component_index)
+local pool_index = (1 + ((component_index - 1) * store["pool-arity"]))
+return component_store_2fget_at_pool_position(store, pool_index)
+end
+do local _ = component_store_2fget_at end
 local function component_store_2fempty(store)
 store[pool] = ({})
 return nil
@@ -252,36 +257,40 @@ world["entities"] = ({})
 return nil
 end
 do local _ = world_2fempty end
-local function component_store_2fcall_on_common_components(fun, extra_arg, component_stores)
+local function component_store_2fcall_on_common_components(fun, static_argument, component_stores)
 local num_stores = #component_stores
-local end_positions = ({})
+local end_indices = ({})
 local indices = ({})
-local positions = ({})
 for i = 1, num_stores do
 push(indices, 1)
-push(end_positions, component_store_2flast_component_pool_position(component_stores[i]))
-push(positions, 1)
+push(end_indices, component_store_2fcount(component_stores[i]))
 end
 local done = nil
-while not done do
 local all_identical = true
 local entity_id = nil
+while not done do
+all_identical = true
+entity_id = nil
+local this_ids = ({})
 for i = 1, num_stores do
 local store = component_stores[i]
-local pos = positions[i]
-local this_id = store.pool[pos]
+local index = indices[i]
+local this_id = component_store_2fget_id_at(store, index)
+push(this_ids, this_id)
 local function _0_()
 if not entity_id then
 entity_id = this_id
 return nil
-else
+end
+end
+_0_()
+local function _1_()
 if (this_id) ~= (entity_id) then
 all_identical = false
 return nil
 end
 end
-end
-_0_()
+_1_()
 end
 local function _0_()
 if (all_identical and entity_id) then
@@ -289,44 +298,34 @@ local components = ({})
 for i = 1, num_stores do
 local store = component_stores[i]
 local index = indices[i]
-local pos = positions[i]
-push(components, component_store_2fget_at_pool_position(store, pos))
+push(components, component_store_2fget_at(store, index))
 indices[i] = (index + 1)
-positions[i] = (pos + store["pool-arity"])
 end
-return fun(extra_arg, unpack(components))
+return fun(static_argument, unpack(components))
 elseif "else" then
-local i = 1
+local i = num_stores
 local increased_an_index = false
 while not increased_an_index do
 local function _0_()
-if (num_stores) ~= (i) then
+if (i) > (1) then
 local index = indices[i]
-local next_index = indices[(i + 1)]
+local next_index = indices[(i - 1)]
 if (index) < (next_index) then
 local store = component_stores[i]
-local pos = positions[i]
 indices[i] = (index + 1)
-positions[i] = (pos + store["pool-arity"])
 increased_an_index = true
 return nil
 end
+elseif "else" then
+local index = indices[i]
+local stores = component_stores[i]
+indices[i] = (index + 1)
+increased_an_index = true
+return nil
 end
 end
 _0_()
-local function _1_()
-if (num_stores) == (i) then
-local index = indices[i]
-local pos = positions[i]
-local store = component_stores[i]
-indices[i] = (index + 1)
-positions[i] = (pos + store["pool-arity"])
-increased_an_index = true
-return nil
-end
-end
-_1_()
-i = (i + 1)
+i = (i - 1)
 end
 return nil
 end
@@ -335,7 +334,7 @@ _0_()
 done = true
 for i = 1, num_stores do
 local function _1_()
-if (positions[i]) < (end_positions[i]) then
+if (done and (indices[i]) < (end_indices[i])) then
 done = false
 return nil
 end

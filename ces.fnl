@@ -41,12 +41,17 @@
 
 (fn component-store/pool-position-from-index [store index] (+ 1 (* (- index 1) store.pool-arity)))
 
+(fn component-store/get-id-at [store component-index]
+  (let [pool-index (component-store/pool-position-from-index store component-index)]
+    (. store.pool pool-index)))
+
+(fn component-store/get-at-pool-position [store pool-index]
+  (slice store.pool pool-index store.pool-arity))
+
 (fn component-store/get-at [store component-index]
   (let [pool-index (+ 1 (* (- component-index 1) store.pool-arity))]
     (component-store/get-at-pool-position store pool-index)))
 
-(fn component-store/get-at-pool-position [store pool-index]
-  (slice store.pool pool-index store.pool-arity))
 (fn component-store/empty [store] (tset store pool []))
 
 (fn component-store/create-component [store args]
@@ -179,80 +184,80 @@
     (component-store/empty component-store))
   (tset world :entities []))
 
-(fn component-store/call-on-common-components [fun extra-arg component-stores]
-  (local num-stores (# component-stores))
-  (local end-positions []) 
-  (local indices [])
-  (local positions [])
-  (for [i 1 num-stores]
-    (push indices 1)
-    (push end-positions (component-store/last-component-pool-position (. component-stores i)))
-    (push positions 1))
+(fn component-store/call-on-common-components [fun static-argument component-stores]
+  (let [num-stores (# component-stores)
+        end-indices []
+        indices []]
 
-  (var done nil)
-  (while (not done)
-    ;; are all entity ids identical?
+    ;; Init index and end position arrays
+    (for [i 1 num-stores]
+      (push indices 1)
+      (push end-indices (component-store/count (. component-stores i))))
+
+    (var done nil)
     (var all-identical true)
     (var entity-id nil)
-    (for [i 1 num-stores]
-      (local store (. component-stores i))
-      (local pos (. positions i))
-      (local this-id (. store.pool pos))
-      (if (not entity-id) (set entity-id this-id)
-          (if (~= this-id entity-id)
-              (do
-                (set all-identical false)))))
-    
-    (if (and all-identical entity-id)
-        (do
-          (local components [])
-          (for [i 1 num-stores]
-            (local store (. component-stores i))
-            (local index (. indices i))
-            (local pos (. positions i))
-            (push components (component-store/get-at-pool-position store pos))
-            (tset indices i (+ index 1))
-            (tset positions i (+ pos store.pool-arity)))
-          (fun extra-arg (unpack components)))
+    (while (not done)
 
-        :else
-        (do
-          (var i 1)
-          (var increased-an-index false)
-          (while (not increased-an-index)
-            (do 
-              (when (~= num-stores i)
-                (do
-                  (local index (. indices i))
-                  (local next-index (. indices (+ i 1)))
-                  (when (< index next-index)
-                    (do
-                      (local store (. component-stores i))
-                      (local pos (. positions i))
-                      (tset indices i (+ index 1))
-                      (tset positions i (+ pos store.pool-arity))
-                      (set increased-an-index true)))))
-              
-              ;; increase the last index if we didn't
-              ;; increase anything else
-              (when (= num-stores i)
-                (do
-                  (local index (. indices i))
-                  (local pos (. positions i))
-                  (local store (. component-stores i))
-                  (tset indices i (+ index 1))
-                  (tset positions i (+ pos store.pool-arity))
-                  (set increased-an-index true)))
+      ;; Check if all IDs at the selected indices are identical
+      (set all-identical true)
+      (set entity-id nil)
+      (local this-ids [])
+      (for [i 1 num-stores]
+        (let [store (. component-stores i)
+              index (. indices i)
+              this-id (component-store/get-id-at store index)]
+          (push this-ids this-id)
+          (when (not entity-id) (set entity-id this-id))
+          (when (~= this-id entity-id) (set all-identical false))
+          ))
 
-              (set i (+ i 1)))
-            ))) 
+      (if
+       ;; When all IDs at the selected indices are identical, retrieve
+       ;; the components from the stores and call fun with their values
+       ;; as tables
+       (and all-identical entity-id)
+       (let [components []]
+         (for [i 1 num-stores]
+           (let [store (. component-stores i)
+                 index (. indices i)]
+             (push components (component-store/get-at store index))
+             (tset indices i (+ index 1))))
+         (fun static-argument (unpack components)))
 
-    ;; stop looping if we've finished all the stores
-    (set done true)
-    (for [i 1 num-stores]
-      (when (< (. positions i) (. end-positions i))
-        (set done false)))
-    ))
+       ;; Otherwise, increase the first index that's less than the
+       ;; others (this depends on the implementation behavior of
+       ;; worlds and component stores, which use an incrementing ID
+       ;; and always push component values into the component store as
+       ;; soon as they're created).
+       :else
+       (do
+         (var i num-stores)
+         (var increased-an-index false)
+         (while (not increased-an-index)
+           (if (> i 1)
+               (let [index (. indices i)
+                     next-index (. indices (- i 1))]
+                 (when (< index next-index)
+                   (let [store (. component-stores i)]
+                     (tset indices i (+ index 1))
+                     (set increased-an-index true))))
+
+               ;; increase the first index if we didn't
+               ;; increase anything else
+               :else
+               (let [index (. indices i)
+                     stores (. component-stores i)]
+                 (tset indices i (+ index 1))
+                 (set increased-an-index true)))
+           (set i (- i 1))))) 
+
+      ;; stop looping if we've finished all the stores
+      (set done true)
+      (for [i 1 num-stores]
+        (when (and done (< (. indices i) (. end-indices i)))
+          (set done false)))
+      )))
 
 (fn world/call-on-common-components [world component-names fun extra-arg]
   (component-store/call-on-common-components fun
