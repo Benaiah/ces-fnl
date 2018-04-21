@@ -348,7 +348,7 @@ do local _ = component_store_2fcall_on_common_components end
 local function world_2fcall_on_common_components(world, component_names, fun, extra_arg)
 local function _0_()
 local stores = ({})
-for i = 0, #component_names do
+for i = 1, #component_names do
 push(stores, world["component-stores"][component_names[i]])
 end
 return stores

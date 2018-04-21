@@ -157,21 +157,21 @@
                                  component-updates)))
 
 (fn world/run-removals [world entity-removals]
-  (local components-removals {})
-  (local entities world.entities)
-  (local stores-requiring-removals {})
-  ;; TODO: stop checking entities if we've already determined
-  ;; that every component store needs to run removals
-  (each [id _ (pairs entity-removals)]
-    (local components-list (. entities id))
-    (for [i 1 (# components-list)]
-      (local component-name (. components-list i))
-      (or (. stores-requiring-removals component-name)
-          (tset stores-requiring-removals component-name true)))
-    (tset entities id nil))
-  (each [component-name _ (pairs stores-requiring-removals)]
-    (local store (. world.component-stores component-name))
-    (component-store/run-removals store entity-removals)))
+  (let [components-removals []
+        entities world.entities
+        stores-requiring-removals {}]
+    ;; TODO: stop checking entities if we've already determined
+    ;; that every component store needs to run removals
+    (each [id _ (pairs entity-removals)]
+      (local components-list (. entities id))
+      (for [i 1 (# components-list)]
+        (local component-name (. components-list i))
+        (or (. stores-requiring-removals component-name)
+            (tset stores-requiring-removals component-name true)))
+      (tset entities id nil))
+    (each [component-name _ (pairs stores-requiring-removals)]
+      (local store (. world.component-stores component-name))
+      (component-store/run-removals store entity-removals))))
 
 (fn world/run-creations [world new-entities]
   (local ids [])
@@ -260,12 +260,12 @@
       )))
 
 (fn world/call-on-common-components [world component-names fun extra-arg]
-  (component-store/call-on-common-components fun
-                                             extra-arg
-                                             (do (local stores [])
-                                                 (for [i 0 (# component-names)]
-                                                   (push stores (. world.component-stores (. component-names i))))
-                                                 stores)))
+  (component-store/call-on-common-components
+   fun extra-arg
+   (do (local stores [])
+       (for [i 1 (# component-names)]
+         (push stores (. world.component-stores (. component-names i))))
+       stores)))
 
 {:world {:create world/create
          :create-entity world/create-entity
