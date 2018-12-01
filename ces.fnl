@@ -207,7 +207,7 @@
       (when entity-update
         (for [j 1 arity]
           (local val (. entity-update j))
-          (when val (tset pool (+ i j) val)))))))
+          (when (~= val nil) (tset pool (+ i j) val)))))))
 
 (fn component-store/run-removals [store entities-to-remove]
   (let [pool store.pool
